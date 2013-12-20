@@ -16,13 +16,14 @@ public class Downloader extends Thread {
     private long loadedSize;
     private DownloadProgressReport callback;
     private volatile boolean running = true;
+    private volatile boolean killed = false;
 
     public Downloader(String url, DownloadProgressReport reportCallback) {
         this.url = url;
         callback = reportCallback;
     }
 
-    public String loadInBackground() {
+    public void loadInBackground() {
         try {
             URL toDownload = new URL(url);
             HttpURLConnection urlConnection = (HttpURLConnection) toDownload.openConnection();
@@ -42,16 +43,21 @@ public class Downloader extends Thread {
 
             byte[] buffer = new byte[1024];
             int bufferLength = 0; //used to store a temporary size of the buffer
-            while ((bufferLength = inputStream.read(buffer)) > 0) {
-                while(!running) {
+            while (!killed && (bufferLength = inputStream.read(buffer)) > 0) {
+                while(!running && !killed) {
                     Thread.sleep(500);
                 }
-                fileOutput.write(buffer, 0, bufferLength);
-                loadedSize += bufferLength;
-                reportProgress();
+                if (!killed) {
+                    fileOutput.write(buffer, 0, bufferLength);
+                    loadedSize += bufferLength;
+                    reportProgress();
+                }
             }
 
             fileOutput.close();
+            if (killed && outFile.exists()) {
+                outFile.delete();
+            }
         } catch (MalformedURLException e) {
             // TODO: handle failure gracefully
             e.printStackTrace();
@@ -62,7 +68,8 @@ public class Downloader extends Thread {
             // TODO: restart download?
             e.printStackTrace();
         }
-        return "outfile";
+
+        callback.reset();
     }
 
     private void reportProgress() {
@@ -78,7 +85,12 @@ public class Downloader extends Thread {
         running = !pause;
     }
 
+    public void kill() {
+        killed = true;
+    }
+
     public interface DownloadProgressReport {
         public void reportProgress(long loaded, long total);
+        public void reset();
     }
 }

@@ -127,7 +127,16 @@ public class DownloadActivity extends Activity {
                             getEventBus().post(new DownloadProgressEvent(loaded, total));
                         }
                     });
+                }
 
+                @Override
+                public void reset() {
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            switchToDownload(((Button) getView().findViewById(R.id.downloadButton)));
+                        }
+                    });
                 }
             });
             downloadThread.start();
@@ -146,6 +155,14 @@ public class DownloadActivity extends Activity {
             switchToPause(((Button) event.getView()));
         }
 
+        @Subscribe
+        public void answerReset(ResetEvent event) {
+            if (downloadThread != null && downloadThread.isAlive()) {
+                downloadThread.kill();
+            }
+            switchToDownload(((Button) this.getView().findViewById(R.id.downloadButton)));
+        }
+
         private void switchToPause(Button downloadButton) {
             downloadButton.setText(getString(R.string.pause));
             downloadButton.setOnClickListener(handlePause);
@@ -154,6 +171,13 @@ public class DownloadActivity extends Activity {
         private void switchToResume(Button downloadButton) {
             downloadButton.setText(getString(R.string.resume));
             downloadButton.setOnClickListener(handleResume);
+        }
+
+        private void switchToDownload(Button downloadButton) {
+            downloadButton.setText(getString(R.string.download));
+            downloadButton.setOnClickListener(handleDownload);
+            downloadProgress.setText(getString(R.string.zero_bytes));
+            progressBar.setProgress(0);
         }
     }
 }
