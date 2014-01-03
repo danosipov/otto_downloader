@@ -89,6 +89,14 @@ public class Downloader extends Thread {
         killed = true;
     }
 
+    public boolean isRunning() {
+        return running;
+    }
+
+    public boolean isKilled() {
+        return killed;
+    }
+
     public interface DownloadProgressReport {
         public void reportProgress(long loaded, long total);
         public void reset();

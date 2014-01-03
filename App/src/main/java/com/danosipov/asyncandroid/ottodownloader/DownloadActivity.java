@@ -78,6 +78,7 @@ public class DownloadActivity extends Activity {
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                 Bundle savedInstanceState) {
+            setRetainInstance(true);
             View rootView = inflater.inflate(R.layout.fragment_download, container, false);
 
             progressBar = ((ProgressBar) rootView.findViewById(R.id.downloadProgressBar));
@@ -90,6 +91,18 @@ public class DownloadActivity extends Activity {
             Button downloadButton = ((Button) rootView.findViewById(R.id.downloadButton));
             downloadButton.setOnClickListener(handleDownload);
 
+            /**
+             * Restore state of the views based on the fragment instance state
+             * If not done, the center button stays in "download" state that
+             * the view is initialized with
+             */
+            if (downloadThread != null) {
+                if (downloadThread.isRunning() && !downloadThread.isKilled()) {
+                    switchToPause(downloadButton);
+                } else if (!downloadThread.isRunning() && !downloadThread.isKilled()) {
+                    switchToResume(downloadButton);
+                }
+            }
 
             return rootView;
         }
@@ -121,22 +134,29 @@ public class DownloadActivity extends Activity {
             downloadThread = new Downloader(urlEditText.getText().toString(), new Downloader.DownloadProgressReport() {
                 @Override
                 public void reportProgress(final long loaded, final long total) {
-                    getActivity().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            getEventBus().post(new DownloadProgressEvent(loaded, total));
-                        }
-                    });
+                    final Activity activity = getActivity();
+                    if (activity != null) {
+                        activity.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                ((DownloadApplication) activity.getApplication()).getBus()
+                                        .post(new DownloadProgressEvent(loaded, total));
+                            }
+                        });
+                    }
                 }
 
                 @Override
                 public void reset() {
-                    getActivity().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            switchToDownload(((Button) getView().findViewById(R.id.downloadButton)));
-                        }
-                    });
+                    final Activity activity = getActivity();
+                    if (activity != null) {
+                        activity.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                switchToDownload(((Button) getView().findViewById(R.id.downloadButton)));
+                            }
+                        });
+                    }
                 }
             });
             downloadThread.start();
