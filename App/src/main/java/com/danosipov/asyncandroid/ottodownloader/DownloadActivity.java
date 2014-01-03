@@ -33,11 +33,6 @@ public class DownloadActivity extends Activity {
                     .add(R.id.container, new DownloadFragment())
                     .commit();
         }
-
-    }
-
-    private Bus getEventBus() {
-        return ((DownloadApplication) getApplication()).getBus();
     }
 
     public static class DownloadFragment extends Fragment {
