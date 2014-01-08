@@ -35,6 +35,10 @@ public class DownloadActivity extends Activity {
         }
     }
 
+    /**
+     * Main fragment in our application
+     * Decoupled from the parent activity to allow rotation handling.
+     */
     public static class DownloadFragment extends Fragment {
 
         private ProgressBar progressBar;
@@ -42,6 +46,9 @@ public class DownloadActivity extends Activity {
         private Downloader downloadThread;
         private TextView downloadProgress;
 
+        /**
+         * OnClickListeners, posting different events to the bus.
+         */
         private View.OnClickListener handleReset = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -80,7 +87,7 @@ public class DownloadActivity extends Activity {
             urlEditText = ((EditText) rootView.findViewById(R.id.urlEditText));
             downloadProgress = ((TextView) rootView.findViewById(R.id.downloadProgressTextView));
 
-            // See how to better handle this code:
+            // Initialize the button listeners
             Button resetButton = ((Button) rootView.findViewById(R.id.resetButton));
             resetButton.setOnClickListener(handleReset);
             Button downloadButton = ((Button) rootView.findViewById(R.id.downloadButton));
@@ -118,12 +125,23 @@ public class DownloadActivity extends Activity {
             return ((DownloadApplication) getActivity().getApplication()).getBus();
         }
 
+        /**
+         * Handle download progress event
+         * Updates the progress indicator views.
+         *
+         * @param event
+         */
         @Subscribe
         public void answerProgress(DownloadProgressEvent event) {
             progressBar.setProgress((int) event.getProgress());
             downloadProgress.setText(String.format("%s / %s", event.getLoadedBytes(), event.getTotalBytes()));
         }
 
+        /**
+         * Starts the download process.
+         *
+         * @param event
+         */
         @Subscribe
         public void answerDownloadStart(DownloadStartEvent event) {
             downloadThread = new Downloader(urlEditText.getText().toString(), new Downloader.DownloadProgressReport() {
@@ -158,18 +176,33 @@ public class DownloadActivity extends Activity {
             switchToPause(((Button) event.getView()));
         }
 
+        /**
+         * Responds to the pause event.
+         *
+         * @param event
+         */
         @Subscribe
         public void answerDownloadPause(DownloadPauseEvent event) {
             downloadThread.pause(true);
             switchToResume(((Button) event.getView()));
         }
 
+        /**
+         * Responds to the resume event.
+         *
+         * @param event
+         */
         @Subscribe
         public void answerDownloadResume(DownloadResumeEvent event) {
             downloadThread.pause(false);
             switchToPause(((Button) event.getView()));
         }
 
+        /**
+         * Responds to the reset event.
+         *
+         * @param event
+         */
         @Subscribe
         public void answerReset(ResetEvent event) {
             if (downloadThread != null && downloadThread.isAlive()) {
@@ -178,16 +211,32 @@ public class DownloadActivity extends Activity {
             switchToDownload(((Button) this.getView().findViewById(R.id.downloadButton)));
         }
 
+        /**
+         * Switches the download button to fire Pause events.
+         *
+         * @param downloadButton
+         */
         private void switchToPause(Button downloadButton) {
             downloadButton.setText(getString(R.string.pause));
             downloadButton.setOnClickListener(handlePause);
         }
 
+        /**
+         * Switches the download button to fire Resume events.
+         *
+         * @param downloadButton
+         */
         private void switchToResume(Button downloadButton) {
             downloadButton.setText(getString(R.string.resume));
             downloadButton.setOnClickListener(handleResume);
         }
 
+        /**
+         * Switches the download button to fire Download Start events.
+         * Clears out progress indicators.
+         *
+         * @param downloadButton
+         */
         private void switchToDownload(Button downloadButton) {
             downloadButton.setText(getString(R.string.download));
             downloadButton.setOnClickListener(handleDownload);

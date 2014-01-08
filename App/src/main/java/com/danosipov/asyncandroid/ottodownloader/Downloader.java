@@ -33,6 +33,7 @@ public class Downloader extends Thread {
             //urlConnection.setDoOutput(true);
             urlConnection.connect();
 
+            // We don't care about the downloaded file, just store it anywhere
             File sdCardRoot = Environment.getExternalStorageDirectory();
             File outFile = new File(sdCardRoot, "outfile");
             FileOutputStream fileOutput = new FileOutputStream(outFile);
@@ -59,13 +60,13 @@ public class Downloader extends Thread {
                 outFile.delete();
             }
         } catch (MalformedURLException e) {
-            // TODO: handle failure gracefully
+            // Should handle failure gracefully
             e.printStackTrace();
         } catch (IOException e) {
-            // TODO: handle failure gracefully
+            // Should handle failure gracefully
             e.printStackTrace();
         } catch (InterruptedException e) {
-            // TODO: restart download?
+            // Should restart download?
             e.printStackTrace();
         }
 
